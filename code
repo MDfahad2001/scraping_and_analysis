@@ -1,0 +1,89 @@
+import bs4
+import requests
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from IPython.display import display
+
+def get_basketball_stats(link='https://en.wikipedia.org/wiki/Michael_Jordan'):
+    # read the webpage
+    response = requests.get(link)
+    # create a BeautifulSoup object to parse the HTML
+    soup = bs4.BeautifulSoup(response.text, 'html.parser')
+    # the player stats are defined  with the attribute CSS class set to 'wikitable sortable';
+    #therefore we create a tag object "table"
+    table = soup.find(class_='wikitable sortable')
+
+    #the headers of the table are the first table row (tr) we create a tag object that has the first row
+    headers = table.tr
+    titles = headers.find_all('abbr')
+    #we create a dictionary  and pass the table headers as the keys
+    data = {title['title']: [] for title in titles}
+    #we will store each column as a list in a dictionary, the header of the column will be the dictionary key
+
+    #we iterate over each table row by fining each table tag tr and assign it to the objed
+    for row in table.find_all('tr')[1:]:
+        #we iterate over each cell in the table, as each cell corresponds to a different column we all obtain the correspondin key corresponding the column n
+        for key, a in zip(data.keys(),row.find_all('td')[2:]):
+            data[key].append(''.join(c for c in a.text if (c.isdigit() or c == '.')))
+
+        # we remove extra rows by finding the smallest list
+        Min = min([len(x) for x in data.values()])
+        #we convert the elements in the key to floats
+        for key in data.keys():
+            data[key] = list(map(lambda x: float(x), data[key][:Min]))
+    return data
+
+links = ['https://en.wikipedia.org/wiki/Michael_Jordan'\
+       ,'https://en.wikipedia.org/wiki/Kobe_Bryant'\
+      ,'https://en.wikipedia.org/wiki/LeBron_James'\
+      ,'https://en.wikipedia.org/wiki/Kevin_Durant'\
+      ,'https://en.wikipedia.org/wiki/Magic_Johnson'\
+      ,'https://en.wikipedia.org/wiki/James_Harden'\
+      ,'https://en.wikipedia.org/wiki/Dwyane_Wade'\
+      ,'https://en.wikipedia.org/wiki/Jerry_West'\
+      ,'https://en.wikipedia.org/wiki/Anthony_Davis'\
+      ,'https://en.wikipedia.org/wiki/Stephen_Curry']
+names = ['Michael Jordan','Kobe Bryant','Lebron James','kevin Durant','Magic Johnson','James Harden','Dwyane Wade','Jerry West','Anthony Davis','Stephen Curry']
+
+Michael_jordan_dict = get_basketball_stats(links[0])
+kobe_bryant_dict = get_basketball_stats(links[1])
+lebron_james_dict = get_basketball_stats(links[2])
+Kevin_Durant_dict = get_basketball_stats(links[3])
+Magic_Johnson_dict = get_basketball_stats(links[4])
+James_Harden_dict = get_basketball_stats(links[5])
+Dwyane_Wade_dict = get_basketball_stats(links[6])
+Jerry_West_dict = get_basketball_stats(links[7])
+Anthony_Davis_dict = get_basketball_stats(links[8])
+stephen_curry_dict = get_basketball_stats(links[9])
+
+mj_table = pd.DataFrame(michael_jordan_dict)
+kb_table = pd.DataFrame(kobe_bryant_dict)
+lj_table = pd.DataFrame(lebron_james_dict)
+kd_table = pd.DataFrame(Kevin_Durant_dict)
+maj_table = pd.DataFrame(Magic_Johnson_dict)
+jh_table = pd.DataFrame(James_Harden_dict)
+dw_table = pd.DataFrame(Dwyane_Wade_dict)
+jw_table = pd.DataFrame(Jerry_West_dict)
+ad_table = pd.DataFrame(Anthony_Davis_dict)
+sc_table = pd.DataFrame(stephen_curry_dict)
+
+list_table =[mj_table, kb_table, lj_table,kd_table,maj_table,jh_table,dw_table,jw_table,ad_table, sc_table]
+
+i = 0
+for name in names:
+    print(name)
+    display(list_table[i].head())
+    i += 1
+
+j = 0
+for name in names:
+    plt.plot(list_table[j][['Points per game']],label=name)
+    plt.legend()
+    plt.xlabel('years')
+    plt.ylabel('Points per game')
+
+    j += 1
+
+csv_name = 'MJ1.csv'
+mj_table.to_csv(csv_name)
